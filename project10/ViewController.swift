@@ -15,6 +15,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(pickImage))
+        getSavedPeopleArray()
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -41,6 +42,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         ac.addAction(UIAlertAction(title: "OK", style: .default) { [weak self, weak ac] _ in
             guard let name = ac?.textFields![0].text else {return}
             self?.people[indexPath.item].name = name
+            self?.save()
             self?.collectionView.reloadData()
         })
         present(ac, animated: true)
@@ -63,6 +65,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         }
         let person = Person(name: "unknown", image: imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
 
         dismiss(animated: true)
@@ -72,7 +75,25 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
     }
-
-
+    
+    func save(){
+        let encoder = JSONEncoder()
+        if let savedData = try? encoder.encode(people){
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        }
+    }
+    
+    func getSavedPeopleArray(){
+        let decoder = JSONDecoder()
+        let defaults = UserDefaults.standard
+        if let savedData = defaults.object(forKey: "people") as? Data {
+            do {
+                people = try decoder.decode([Person].self, from: savedData)
+            } catch {
+                print("Cant Decode Data")
+            }
+        }
+    }
 }
 
